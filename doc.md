@@ -764,6 +764,1203 @@ damulink/
 
 ---
 
+
+# 13.1 API Architecture Overview
+
+All backend communication is handled through a versioned REST API.
+
+Base URL:
+
+```bash
+https://api.damulink.co.ke/api/v1/
+```
+
+### API Standards
+
+| Standard        | Implementation                   |
+| --------------- | -------------------------------- |
+| Response Format | JSON                             |
+| Authentication  | JWT Bearer Tokens                |
+| Rate Limiting   | DRF Throttling                   |
+| API Versioning  | URI-based (`/api/v1/`)           |
+| Pagination      | Limit/Offset                     |
+| Permissions     | Role-Based Access Control (RBAC) |
+| Validation      | DRF Serializers                  |
+| Async Jobs      | Celery + Redis                   |
+| File Uploads    | Multipart/Form-Data              |
+| Audit Logging   | Middleware + Model Hooks         |
+
+---
+
+# 13.2 Authentication Endpoints
+
+## Register Donor
+
+### Endpoint
+
+```http
+POST /api/v1/auth/register/donor/
+```
+
+### Request
+
+```json
+{
+  "full_name": "James Mwangi",
+  "phone": "+254712345678",
+  "email": "james@example.com",
+  "password": "StrongPassword123",
+  "national_id": "34567890",
+  "date_of_birth": "1998-03-12"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Donor account created successfully",
+  "user_id": 41,
+  "otp_sent": true
+}
+```
+
+---
+
+## Register Hospital
+
+### Endpoint
+
+```http
+POST /api/v1/auth/register/hospital/
+```
+
+### Request
+
+```json
+{
+  "facility_name": "Nairobi West Hospital",
+  "facility_type": "private",
+  "email": "admin@nairobiwesthospital.com",
+  "phone": "+254700000001",
+  "password": "SecurePass123",
+  "license_number": "KMPDC-9087"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Hospital registration submitted for review",
+  "hospital_id": 18,
+  "status": "pending_review"
+}
+```
+
+---
+
+## Login
+
+### Endpoint
+
+```http
+POST /api/v1/auth/login/
+```
+
+### Request
+
+```json
+{
+  "phone": "+254712345678",
+  "password": "StrongPassword123"
+}
+```
+
+### Response
+
+```json
+{
+  "access": "jwt_access_token",
+  "refresh": "jwt_refresh_token",
+  "user": {
+    "id": 41,
+    "role": "donor",
+    "is_verified": true
+  }
+}
+```
+
+---
+
+## Refresh Token
+
+### Endpoint
+
+```http
+POST /api/v1/auth/token/refresh/
+```
+
+### Request
+
+```json
+{
+  "refresh": "jwt_refresh_token"
+}
+```
+
+### Response
+
+```json
+{
+  "access": "new_access_token"
+}
+```
+
+---
+
+## Logout
+
+### Endpoint
+
+```http
+POST /api/v1/auth/logout/
+```
+
+### Headers
+
+```http
+Authorization: Bearer <access_token>
+```
+
+### Request
+
+```json
+{
+  "refresh": "jwt_refresh_token"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+---
+
+# 13.3 Donor CRUD Endpoints
+
+## Create Donor Profile
+
+### Endpoint
+
+```http
+POST /api/v1/donors/profile/
+```
+
+### Headers
+
+```http
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+### Request
+
+```json
+{
+  "blood_type": "O+",
+  "donor_type": "both",
+  "organs_pledged": ["kidney", "cornea"],
+  "county": "Nairobi",
+  "town": "Westlands",
+  "lat": -1.2676,
+  "lng": 36.8108,
+  "preferred_contact_method": "sms",
+  "insurance_provider": "SHA"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Donor profile created successfully",
+  "profile_id": 93
+}
+```
+
+---
+
+## Retrieve Donor Profile
+
+### Endpoint
+
+```http
+GET /api/v1/donors/profile/
+```
+
+### Response
+
+```json
+{
+  "id": 93,
+  "full_name": "James Mwangi",
+  "blood_type": "O+",
+  "credits": 450,
+  "badge": "Silver Lifesaver",
+  "availability_status": true,
+  "cooldown_until": null
+}
+```
+
+---
+
+## Update Donor Profile
+
+### Endpoint
+
+```http
+PATCH /api/v1/donors/profile/
+```
+
+### Request
+
+```json
+{
+  "town": "Kilimani",
+  "preferred_contact_method": "whatsapp"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Profile updated successfully"
+}
+```
+
+---
+
+## Delete Donor Account
+
+### Endpoint
+
+```http
+DELETE /api/v1/donors/profile/
+```
+
+### Response
+
+```json
+{
+  "message": "Donor account scheduled for deletion"
+}
+```
+
+---
+
+# 13.4 Hospital CRUD Endpoints
+
+## Create Hospital Profile
+
+### Endpoint
+
+```http
+POST /api/v1/hospitals/profile/
+```
+
+### Request
+
+```json
+{
+  "facility_name": "Aga Khan Hospital",
+  "facility_type": "private",
+  "address": "Parklands, Nairobi",
+  "license_number": "AGK-0090",
+  "lat": -1.259,
+  "lng": 36.804
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Hospital profile created successfully"
+}
+```
+
+---
+
+## Retrieve Hospital Profile
+
+### Endpoint
+
+```http
+GET /api/v1/hospitals/profile/
+```
+
+### Response
+
+```json
+{
+  "facility_name": "Aga Khan Hospital",
+  "subscription_tier": "professional",
+  "subscription_status": "active",
+  "expires_at": "2026-09-12"
+}
+```
+
+---
+
+## Update Hospital Profile
+
+### Endpoint
+
+```http
+PATCH /api/v1/hospitals/profile/
+```
+
+### Request
+
+```json
+{
+  "facility_type": "ngo"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Hospital profile updated"
+}
+```
+
+---
+
+## Delete Hospital Profile
+
+### Endpoint
+
+```http
+DELETE /api/v1/hospitals/profile/
+```
+
+### Response
+
+```json
+{
+  "message": "Hospital profile deactivated"
+}
+```
+
+---
+
+# 13.5 Donor Search & Matching Endpoints
+
+## Search Blood Donors
+
+### Endpoint
+
+```http
+GET /api/v1/matching/search/blood/?blood_type=O+&radius=10
+```
+
+### Response
+
+```json
+{
+  "count": 2,
+  "results": [
+    {
+      "donor_id": 93,
+      "name": "James M.",
+      "blood_type": "O+",
+      "distance_km": 4.2,
+      "last_donation_date": "2026-02-10",
+      "contact_preference": "sms"
+    },
+    {
+      "donor_id": 102,
+      "name": "Faith K.",
+      "blood_type": "O+",
+      "distance_km": 6.1,
+      "last_donation_date": "2026-01-21",
+      "contact_preference": "call"
+    }
+  ]
+}
+```
+
+---
+
+## Search Organ Donors
+
+### Endpoint
+
+```http
+GET /api/v1/matching/search/organs/?organ=kidney&radius=50
+```
+
+### Response
+
+```json
+{
+  "count": 1,
+  "results": [
+    {
+      "donor_id": 201,
+      "name": "Samuel O.",
+      "organ": "kidney",
+      "distance_km": 13.7
+    }
+  ]
+}
+```
+
+---
+
+## Initiate Contact Request
+
+### Endpoint
+
+```http
+POST /api/v1/matching/contact-request/
+```
+
+### Request
+
+```json
+{
+  "donor_id": 93,
+  "reason": "Urgent O+ blood requirement"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Contact request initiated",
+  "status": "pending_donor_response"
+}
+```
+
+---
+
+## Retrieve Contact Requests
+
+### Endpoint
+
+```http
+GET /api/v1/matching/contact-requests/
+```
+
+### Response
+
+```json
+{
+  "results": [
+    {
+      "request_id": 19,
+      "donor": "James M.",
+      "status": "accepted",
+      "requested_at": "2026-05-12T11:22:00Z"
+    }
+  ]
+}
+```
+
+---
+
+# 13.6 Donation Records CRUD
+
+## Create Donation Record
+
+### Endpoint
+
+```http
+POST /api/v1/donations/
+```
+
+### Request
+
+```json
+{
+  "donor_id": 93,
+  "hospital_id": 18,
+  "donation_type": "whole_blood",
+  "donation_date": "2026-05-01"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Donation recorded successfully",
+  "credits_awarded": 100
+}
+```
+
+---
+
+## Retrieve Donation History
+
+### Endpoint
+
+```http
+GET /api/v1/donations/history/
+```
+
+### Response
+
+```json
+{
+  "results": [
+    {
+      "donation_id": 11,
+      "type": "whole_blood",
+      "hospital": "Nairobi Hospital",
+      "date": "2026-05-01",
+      "credits_awarded": 100
+    }
+  ]
+}
+```
+
+---
+
+## Update Donation Record
+
+### Endpoint
+
+```http
+PATCH /api/v1/donations/11/
+```
+
+### Request
+
+```json
+{
+  "donation_type": "platelet"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Donation record updated"
+}
+```
+
+---
+
+## Delete Donation Record
+
+### Endpoint
+
+```http
+DELETE /api/v1/donations/11/
+```
+
+### Response
+
+```json
+{
+  "message": "Donation record removed"
+}
+```
+
+---
+
+# 13.7 Credits & Gamification Endpoints
+
+## Retrieve Credit Balance
+
+### Endpoint
+
+```http
+GET /api/v1/credits/balance/
+```
+
+### Response
+
+```json
+{
+  "credits": 850,
+  "cash_equivalent": 850
+}
+```
+
+---
+
+## Retrieve Credit Ledger
+
+### Endpoint
+
+```http
+GET /api/v1/credits/ledger/
+```
+
+### Response
+
+```json
+{
+  "results": [
+    {
+      "transaction_type": "earn",
+      "amount": 100,
+      "reason": "Whole blood donation",
+      "created_at": "2026-05-01T09:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## Retrieve Badges
+
+### Endpoint
+
+```http
+GET /api/v1/gamification/badges/
+```
+
+### Response
+
+```json
+{
+  "results": [
+    {
+      "badge": "Silver Lifesaver",
+      "earned_at": "2026-04-12"
+    }
+  ]
+}
+```
+
+---
+
+# 13.8 Subscription & Payment Endpoints
+
+## Initiate M-Pesa STK Push
+
+### Endpoint
+
+```http
+POST /api/v1/payments/mpesa/stk-push/
+```
+
+### Request
+
+```json
+{
+  "phone": "+254700000001",
+  "amount": 15000,
+  "tier": "professional"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "STK push initiated",
+  "checkout_request_id": "ws_CO_123456789"
+}
+```
+
+---
+
+## Stripe Subscription
+
+### Endpoint
+
+```http
+POST /api/v1/payments/stripe/subscribe/
+```
+
+### Request
+
+```json
+{
+  "payment_method_id": "pm_123456",
+  "tier": "enterprise"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Subscription created",
+  "subscription_id": "sub_98765"
+}
+```
+
+---
+
+## Retrieve Subscription Details
+
+### Endpoint
+
+```http
+GET /api/v1/subscriptions/current/
+```
+
+### Response
+
+```json
+{
+  "tier": "professional",
+  "status": "active",
+  "expires_at": "2026-12-01"
+}
+```
+
+---
+
+# 13.9 USSD Backend Endpoints
+
+## USSD Callback Endpoint
+
+### Endpoint
+
+```http
+POST /api/v1/ussd/
+```
+
+### Request Payload (Africa's Talking)
+
+```json
+{
+  "sessionId": "ATUid_001",
+  "serviceCode": "*384*123#",
+  "phoneNumber": "+254712345678",
+  "text": "1*2"
+}
+```
+
+### Response
+
+```text
+CON Select donor type
+1. Blood
+2. Organ
+```
+
+---
+
+## Confirm Donation via USSD
+
+### Endpoint
+
+```http
+POST /api/v1/ussd/confirm-donation/
+```
+
+### Request
+
+```json
+{
+  "phone": "+254712345678",
+  "confirmation_code": "DML-0091"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Donation confirmed",
+  "credits_awarded": 100
+}
+```
+
+---
+
+# 13.10 Notification Endpoints
+
+## Send SMS Alert
+
+### Endpoint
+
+```http
+POST /api/v1/notifications/sms/
+```
+
+### Request
+
+```json
+{
+  "recipient": "+254712345678",
+  "message": "Urgent O+ blood needed at Nairobi Hospital"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "SMS queued successfully"
+}
+```
+
+---
+
+## Send Email Notification
+
+### Endpoint
+
+```http
+POST /api/v1/notifications/email/
+```
+
+### Request
+
+```json
+{
+  "email": "james@example.com",
+  "subject": "Urgent Donation Request",
+  "message": "A hospital near you needs O+ blood urgently."
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Email queued"
+}
+```
+
+---
+
+# 13.11 Admin Management Endpoints
+
+## Approve Hospital Registration
+
+### Endpoint
+
+```http
+POST /api/v1/admin/hospitals/18/approve/
+```
+
+### Response
+
+```json
+{
+  "message": "Hospital approved successfully"
+}
+```
+
+---
+
+## Reject Hospital Registration
+
+### Endpoint
+
+```http
+POST /api/v1/admin/hospitals/18/reject/
+```
+
+### Request
+
+```json
+{
+  "reason": "Operating license expired"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "Hospital rejected"
+}
+```
+
+---
+
+## Retrieve Audit Logs
+
+### Endpoint
+
+```http
+GET /api/v1/admin/audit-logs/
+```
+
+### Response
+
+```json
+{
+  "results": [
+    {
+      "actor": "hospital_admin",
+      "action": "donor_search",
+      "timestamp": "2026-05-12T10:00:00Z",
+      "ip_address": "102.89.22.1"
+    }
+  ]
+}
+```
+
+---
+
+# 13.12 File Upload Endpoints
+
+## Upload Donor ID Document
+
+### Endpoint
+
+```http
+POST /api/v1/verification/upload-id/
+```
+
+### Headers
+
+```http
+Content-Type: multipart/form-data
+```
+
+### Form Fields
+
+```text
+front_image
+back_image
+selfie_image
+```
+
+### Response
+
+```json
+{
+  "message": "Documents uploaded successfully",
+  "verification_status": "pending"
+}
+```
+
+---
+
+## Upload Hospital License
+
+### Endpoint
+
+```http
+POST /api/v1/hospitals/upload-license/
+```
+
+### Response
+
+```json
+{
+  "message": "License uploaded successfully"
+}
+```
+
+---
+
+# 13.13 Error Response Format
+
+All API errors follow a standardized structure.
+
+## Validation Error
+
+```json
+{
+  "error": true,
+  "message": "Validation failed",
+  "details": {
+    "blood_type": ["This field is required"]
+  }
+}
+```
+
+---
+
+## Unauthorized Error
+
+```json
+{
+  "error": true,
+  "message": "Authentication credentials were not provided"
+}
+```
+
+---
+
+## Permission Denied
+
+```json
+{
+  "error": true,
+  "message": "You do not have permission to perform this action"
+}
+```
+
+---
+
+# 13.14 Django REST Framework Structure
+
+## Example Router Configuration
+
+```python
+from rest_framework.routers import DefaultRouter
+from apps.donors.views import DonorProfileViewSet
+from apps.hospitals.views import HospitalProfileViewSet
+
+router = DefaultRouter()
+router.register(r'donors', DonorProfileViewSet, basename='donors')
+router.register(r'hospitals', HospitalProfileViewSet, basename='hospitals')
+
+urlpatterns = router.urls
+```
+
+---
+
+## Example Serializer
+
+```python
+from rest_framework import serializers
+from .models import DonorProfile
+
+class DonorProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DonorProfile
+        fields = '__all__'
+```
+
+---
+
+## Example ViewSet
+
+```python
+from rest_framework import viewsets
+from .models import DonorProfile
+from .serializers import DonorProfileSerializer
+
+class DonorProfileViewSet(viewsets.ModelViewSet):
+    queryset = DonorProfile.objects.all()
+    serializer_class = DonorProfileSerializer
+```
+
+---
+
+# 13.15 Celery Async Tasks
+
+## Example SMS Task
+
+```python
+from celery import shared_task
+from utils.sms import send_sms
+
+@shared_task
+def send_urgent_sms(phone, message):
+    send_sms(phone, message)
+```
+
+---
+
+## Example Expired Contact Request Task
+
+```python
+@shared_task
+def expire_contact_requests():
+    # Mark requests older than 2 hours as expired
+    pass
+```
+
+---
+
+# 13.16 Suggested API Permissions Matrix
+
+| Endpoint                     | donor    | hospital_staff | hospital_admin | damulink_admin |
+| ---------------------------- | -------- | -------------- | -------------- | -------------- |
+| `/auth/register/`            | ✅        | ✅              | ✅              | ✅              |
+| `/donors/profile/`           | Own Only | ❌              | ❌              | ✅              |
+| `/matching/search/`          | ❌        | ✅              | ✅              | ✅              |
+| `/matching/contact-request/` | ❌        | ✅              | ✅              | ✅              |
+| `/admin/audit-logs/`         | ❌        | ❌              | ❌              | ✅              |
+| `/subscriptions/current/`    | ❌        | ✅              | ✅              | ✅              |
+| `/credits/balance/`          | ✅        | ❌              | ❌              | ✅              |
+
+---
+
+# 13.17 Recommended Production Middleware
+
+```python
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'audit.middleware.AuditMiddleware',
+]
+```
+
+---
+
+# 13.18 Recommended Environment Variables
+
+```env
+SECRET_KEY=django-secret-key
+DEBUG=False
+DATABASE_URL=postgresql://user:password@localhost/damulink
+REDIS_URL=redis://localhost:6379/0
+AWS_ACCESS_KEY_ID=xxx
+AWS_SECRET_ACCESS_KEY=xxx
+AT_API_KEY=xxx
+STRIPE_SECRET_KEY=xxx
+MPESA_CONSUMER_KEY=xxx
+MPESA_CONSUMER_SECRET=xxx
+```
+
+---
+
+# 13.19 API Response Status Codes
+
+| Status Code | Meaning               |
+| ----------- | --------------------- |
+| 200         | Success               |
+| 201         | Resource Created      |
+| 400         | Bad Request           |
+| 401         | Unauthorized          |
+| 403         | Forbidden             |
+| 404         | Resource Not Found    |
+| 429         | Too Many Requests     |
+| 500         | Internal Server Error |
+
+---
+
+# 13.20 Future Backend Enhancements
+
+* GraphQL gateway for enterprise hospitals
+* Real-time donor alerts using WebSockets
+* AI-powered donor matching prioritization
+* Mobile push notifications via Firebase Cloud Messaging (FCM)
+* National blood demand forecasting engine
+* Multi-country deployment architecture
+* Offline-first hospital sync client
+* HL7/FHIR interoperability for hospital systems
+
+---
+
+*End of Extended Backend API Documentation*
+
+
 ## 14. Database Schema Overview
 
 ### Core Tables
