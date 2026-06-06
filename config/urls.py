@@ -16,23 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from apps.donors.views import DonorProfileViewSet
-from apps.hospitals.views import HospitalProfileViewSet
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-
-router = DefaultRouter()
-router.register(r'donors', DonorProfileViewSet)
-router.register(r'hospitals', HospitalProfileViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    path('api/token/', TokenObtainPairView.as_view()),
-    path('api/token/refresh/', TokenRefreshView.as_view()),
-
-    path('api/', include(router.urls)),
+    path('api/v1/auth/', include('apps.accounts.urls')),
+    path('api/v1/donors/', include('apps.donors.urls')),
 ]

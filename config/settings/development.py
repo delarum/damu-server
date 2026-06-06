@@ -29,3 +29,19 @@ SIMPLE_JWT = {
 # Print Celery tasks synchronously instead of queuing (no Redis needed to start)
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# Use local memory cache instead of Redis in development
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}
+
+# Use local memory for sessions too
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
+# Disable Redis-dependent throttling in dev
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_CLASSES": [],
+}
