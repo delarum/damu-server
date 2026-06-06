@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
-
 class ThirdPartyConfig(AppConfig):
-    name = 'third_party'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.third_party"

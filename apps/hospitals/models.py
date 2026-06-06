@@ -1,5 +1,5 @@
 from django.db import models
-from accounts.models import User
+from apps.accounts.models import User
 
 class HospitalProfile(models.Model):
     FACILITY_TYPES = (
