@@ -2,16 +2,15 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Donations
-    path("donations/",              views.create_donation,  name="donation-create"),
-    path("donations/history/",      views.donation_history, name="donation-history"),
-    path("donations/<int:donation_id>/", views.manage_donation, name="donation-manage"),
+    # Hospital — search
+    path("search/blood/",  views.search_blood_donors,  name="search-blood"),
+    path("search/organs/", views.search_organ_donors,  name="search-organs"),
 
-    # Credits
-    path("credits/balance/",        views.credit_balance,      name="credit-balance"),
-    path("credits/ledger/",         views.credit_ledger,       name="credit-ledger"),
-    path("credits/redeem/",         views.redeem_credits_view, name="credit-redeem"),
+    # Hospital — contact requests
+    path("contact-request/",          views.initiate_contact_request, name="contact-request-create"),
+    path("contact-requests/",         views.list_contact_requests,    name="contact-request-list"),
 
-    # Badges
-    path("badges/",                 views.donor_badges,        name="donor-badges"),
+    # Donor — respond & view
+    path("contact-requests/mine/",                      views.donor_contact_requests,      name="donor-requests"),
+    path("contact-requests/<int:request_id>/respond/",  views.respond_to_contact_request,  name="contact-request-respond"),
 ]
