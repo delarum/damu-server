@@ -388,6 +388,137 @@ Authorization: Bearer <access_token>
 
 ## Authentication
 
+| Method | Endpoint |
+|----------|----------|
+| POST | /api/v1/auth/register/donor/ |
+| POST | /api/v1/auth/register/hospital/ |
+| POST | /api/v1/auth/login/ |
+| POST | /api/v1/auth/logout/ |
+| POST | /api/v1/auth/verify-otp/ |
+| POST | /api/v1/auth/resend-otp/ |
+| POST | /api/v1/auth/change-password/ |
+| POST | /api/v1/auth/token/refresh/ |
+| GET | /api/v1/auth/me/ |
+
+---
+
+## Donor Management
+
+| Method | Endpoint |
+|----------|----------|
+| POST | /api/v1/donors/profile/ |
+| GET | /api/v1/donors/profile/me/ |
+| PUT/PATCH | /api/v1/donors/profile/update/ |
+| DELETE | /api/v1/donors/profile/delete/ |
+| POST | /api/v1/donors/profile/availability/ |
+
+---
+
+## Hospital Management
+
+| Method | Endpoint |
+|----------|----------|
+| POST | /api/v1/hospitals/profile/ |
+| GET | /api/v1/hospitals/profile/me/ |
+| PUT/PATCH | /api/v1/hospitals/profile/update/ |
+| DELETE | /api/v1/hospitals/profile/delete/ |
+| POST | /api/v1/hospitals/documents/upload/ |
+| GET | /api/v1/hospitals/staff/ |
+| POST | /api/v1/hospitals/staff/add/ |
+| DELETE | /api/v1/hospitals/staff/{staff_id}/remove/ |
+| GET | /api/v1/hospitals/subscription/ |
+| POST | /api/v1/hospitals/subscription/activate/ |
+
+---
+
+## Matching
+
+| Method | Endpoint |
+|----------|----------|
+| GET | /api/v1/matching/search/blood/ |
+| GET | /api/v1/matching/search/organs/ |
+| POST | /api/v1/matching/contact-request/ |
+| GET | /api/v1/matching/contact-requests/ |
+| GET | /api/v1/matching/contact-requests/mine/ |
+| POST | /api/v1/matching/contact-requests/{request_id}/respond/ |
+
+---
+
+## Donations & Gamification
+
+| Method | Endpoint |
+|----------|----------|
+| POST | /api/v1/donations/ |
+| GET | /api/v1/donations/history/ |
+| GET/PUT/DELETE | /api/v1/donations/{donation_id}/ |
+| GET | /api/v1/credits/balance/ |
+| GET | /api/v1/credits/ledger/ |
+| POST | /api/v1/credits/redeem/ |
+| GET | /api/v1/badges/ |
+
+---
+
+## Payments
+
+| Method | Endpoint |
+|----------|----------|
+| POST | /api/v1/payments/mpesa/stk-push/ |
+| POST | /api/v1/payments/mpesa/callback/ |
+| POST | /api/v1/payments/stripe/subscribe/ |
+| POST | /api/v1/payments/stripe/webhook/ |
+| GET | /api/v1/payments/history/ |
+
+---
+
+## Notifications
+
+| Method | Endpoint |
+|----------|----------|
+| POST | /api/v1/notifications/sms/ |
+| POST | /api/v1/notifications/email/ |
+| GET | /api/v1/notifications/mine/ |
+
+---
+
+## USSD
+
+| Method | Endpoint |
+|----------|----------|
+| POST | /api/v1/ussd/ |
+| POST | /api/v1/ussd/confirm-donation/ |
+
+---
+
+## Verification
+
+| Method | Endpoint |
+|----------|----------|
+| POST | /api/v1/verification/upload-id/ |
+| GET | /api/v1/verification/status/ |
+| GET | /api/v1/verification/manual-review/ |
+| POST | /api/v1/verification/manual-review/{verification_id}/ |
+
+---
+
+## Third Party Integrations
+
+| Method | Endpoint |
+|----------|----------|
+| POST | /api/v1/third-party/apply/ |
+| GET | /api/v1/third-party/applications/ |
+| POST | /api/v1/third-party/applications/{app_id}/review/ |
+| GET | /api/v1/third-party/data/ |
+
+---
+
+## Audit Logs
+
+| Method | Endpoint |
+|----------|----------|
+| GET | /api/v1/audit/logs/ |
+
+## Authentication
+
 ```http
 POST /api/v1/auth/register/donor/
 POST /api/v1/auth/register/hospital/
