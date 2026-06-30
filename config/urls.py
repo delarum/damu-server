@@ -15,7 +15,27 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+from rest_framework import permissions
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="DamuLink API",
+        default_version="v1",
+        description=(
+            "API documentation for the DamuLink platform. "
+            "Provides endpoints for donor and hospital management, matching, "
+            "payments, notifications, audit logs, and USSD integration."
+        ),
+        terms_of_service="https://damulink.co.ke/terms/",
+        contact=openapi.Contact(email="support@damulink.co.ke"),
+        license=openapi.License(name="BSD License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,4 +50,7 @@ urlpatterns = [
     path('api/v1/third-party/', include('apps.third_party.urls')),
     path('api/v1/ussd/', include('apps.ussd.urls')),
     path('api/v1/verification/', include('apps.verification.urls')),
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]

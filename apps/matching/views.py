@@ -184,6 +184,55 @@ def search_organ_donors(request):
     return Response({"count": len(data), "results": data})
 
 
+
+# ---------------------------------------------------------------------------
+# Donor map endpoint — full national network for hospitals
+# ---------------------------------------------------------------------------
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@hospital_member_required
+def donor_map(request):
+    hospital = get_hospital(request.user)
+    if not hospital:
+        return Response({"error": True, "message": "Hospital not found."}, status=404)
+
+    donors_qs = DonorProfile.objects.filter(
+        lat__isnull=False,
+        lng__isnull=False,
+    ).select_related("user")
+
+    # Optional filters
+    blood_type = request.query_params.get("blood_type")
+    if blood_type:
+        donors_qs = donors_qs.filter(blood_type=blood_type)
+
+    donor_type = request.query_params.get("donor_type")
+    if donor_type in ["blood", "organ", "both"]:
+        donors_qs = donors_qs.filter(donor_type=donor_type)
+
+    results = []
+    for donor in donors_qs:
+        results.append({
+            "id":                    donor.id,
+            "full_name":             donor.user.full_name,
+            "phone":                 donor.user.phone,
+            "blood_type":            donor.blood_type,
+            "donor_type":            donor.donor_type,
+            "organs_pledged":        donor.organs_pledged,
+            "county":                donor.county,
+            "sub_county":            donor.sub_county,
+            "town":                  donor.town,
+            "lat":                   float(donor.lat),
+            "lng":                   float(donor.lng),
+            "availability_status":   donor.availability_status,
+            "verification_status":   donor.verification_status,
+            "preferred_contact_method": donor.preferred_contact_method,
+            "last_donation_date":    donor.last_donation_date,
+        })
+
+    return Response({"count": len(results), "results": results})
+
 def _masked_name(donor):
     parts = donor.user.full_name.strip().split()
     if len(parts) >= 2:

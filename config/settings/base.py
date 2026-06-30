@@ -36,6 +36,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "storages",
     "django_celery_beat",
+    "drf_yasg",
 ]
 
 LOCAL_APPS = [
@@ -275,3 +276,8 @@ X_FRAME_OPTIONS = "DENY"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
 FERNET_KEYS = [env('FIELD_ENCRYPTION_KEY')]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]

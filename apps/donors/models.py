@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from apps.accounts.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class DonorProfile(models.Model):
@@ -14,6 +15,11 @@ class DonorProfile(models.Model):
         AB_NEG = "AB-", "AB-"
         O_POS  = "O+",  "O+"
         O_NEG  = "O-",  "O-"
+
+    class Gender(models.TextChoices):
+       MALE   = "male",   "Male"
+       FEMALE = "female", "Female"
+       OTHER  = "other",  "Prefer not to say"    
 
     class DonorType(models.TextChoices):
         BLOOD  = "blood",  "Blood Only"
@@ -45,6 +51,18 @@ class DonorProfile(models.Model):
     health_conditions  = models.TextField(blank=True, null=True)  # encrypted in production
     last_donation_date = models.DateField(blank=True, null=True)
     cooldown_until     = models.DateTimeField(blank=True, null=True)
+
+    gender    = models.CharField(max_length=10, choices=Gender.choices, blank=True)
+    height_cm = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        validators=[MinValueValidator(100), MaxValueValidator(250)],
+        help_text="Height in centimetres",
+    )
+    weight_kg = models.PositiveSmallIntegerField(
+        blank=True, null=True,
+        validators=[MinValueValidator(30), MaxValueValidator(250)],
+        help_text="Weight in kilograms",
+    )
 
     # Location
     county             = models.CharField(max_length=100, blank=True)
