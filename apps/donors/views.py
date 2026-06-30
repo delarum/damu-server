@@ -1,10 +1,11 @@
+from django.db import models
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import DonorProfile
-from .serializers import DonorProfileSerializer, DonorProfileCreateSerializer
+from .serializers import DonorProfileSerializer, DonorProfileCreateSerializer, DonorHospitalViewSerializer
 from apps.accounts.models import User
 
 
@@ -111,3 +112,68 @@ def toggle_availability(request):
     profile.save(update_fields=["availability_status"])
     state = "available" if profile.availability_status else "unavailable"
     return Response({"message": f"You are now marked as {state}.", "availability_status": profile.availability_status})
+
+
+# ---------------------------------------------------------------------------
+# Hospital access — comprehensive donor information
+# ---------------------------------------------------------------------------
+
+def hospital_member_required(view_func):
+    """Decorator: ensures the user is a hospital admin or staff."""
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_hospital_member:
+            return Response(
+                {"error": True, "message": "Only hospital staff can access this endpoint."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return view_func(request, *args, **kwargs)
+    wrapper.__name__ = view_func.__name__
+    return wrapper
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@hospital_member_required
+def hospital_view_donor(request, donor_id):
+    """
+    Comprehensive donor information for hospitals.
+    Returns full donor details including medical info, location, and contact preferences.
+    Only accessible to verified hospital members with active subscriptions.
+    """
+    from apps.hospitals.models import HospitalProfile
+    
+    # Check if hospital has an active subscription
+    try:
+        hospital = HospitalProfile.objects.get(
+            models.Q(admin=request.user) | models.Q(staff__user=request.user)
+        )
+    except HospitalProfile.DoesNotExist:
+        return Response(
+            {"error": True, "message": "Hospital profile not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    
+    if not hospital.is_active_subscriber:
+        return Response(
+            {"error": True, "message": "Active subscription required to view donor details."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    
+    # Get donor profile
+    try:
+        donor = DonorProfile.objects.get(id=donor_id)
+    except DonorProfile.DoesNotExist:
+        return Response(
+            {"error": True, "message": "Donor not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    
+    # Only show verified donors
+    if donor.verification_status != "verified":
+        return Response(
+            {"error": True, "message": "Donor profile is not verified."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    
+    serializer = DonorHospitalViewSerializer(donor)
+    return Response(serializer.data)

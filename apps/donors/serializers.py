@@ -74,3 +74,30 @@ class DonorPublicSerializer(serializers.ModelSerializer):
         if len(parts) >= 2:
             return f"{parts[0]} {parts[-1][0]}."
         return parts[0] if parts else "Donor"
+
+
+class DonorHospitalViewSerializer(serializers.ModelSerializer):
+    """Comprehensive donor information for hospitals — includes all relevant medical and location data."""
+    name           = serializers.SerializerMethodField()
+    phone          = serializers.CharField(source="user.phone", read_only=True)
+    is_available   = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model  = DonorProfile
+        fields = [
+            "id", "name", "phone",
+            "blood_type", "donor_type", "organs_pledged",
+            "gender", "height_cm", "weight_kg",
+            "county", "sub_county", "town",
+            "preferred_contact_method",
+            "availability_status", "is_available", "cooldown_until",
+            "verification_status",
+            "last_donation_date",
+        ]
+
+    def get_name(self, obj):
+        # Masked name: first name + last initial e.g. "James M."
+        parts = obj.user.full_name.strip().split()
+        if len(parts) >= 2:
+            return f"{parts[0]} {parts[-1][0]}."
+        return parts[0] if parts else "Donor"
