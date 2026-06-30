@@ -13,6 +13,7 @@ class DonorProfileSerializer(serializers.ModelSerializer):
         fields = [
             "id", "full_name", "phone",
             "blood_type", "donor_type", "organs_pledged",
+            "gender", "height_cm", "weight_kg",
             "county", "sub_county", "town",
             "preferred_contact_method",
             "insurance_provider",
@@ -73,29 +74,3 @@ class DonorPublicSerializer(serializers.ModelSerializer):
         if len(parts) >= 2:
             return f"{parts[0]} {parts[-1][0]}."
         return parts[0] if parts else "Donor"
-    
-
-class DonorProfileSerializer(serializers.ModelSerializer):
-    full_name   = serializers.CharField(source="user.full_name", read_only=True)
-    phone       = serializers.CharField(source="user.phone", read_only=True)
-    is_available = serializers.BooleanField(read_only=True)
- 
-    class Meta:
-        model  = DonorProfile
-        fields = [
-            "id", "full_name", "phone",
-            "blood_type", "donor_type", "organs_pledged",
-            "gender", "height_cm", "weight_kg",          # <-- new
-            "county", "sub_county", "town",
-            "preferred_contact_method",
-            "insurance_provider",
-            "availability_status", "is_available", "cooldown_until",
-            "verification_status",
-            "emergency_contact_name", "emergency_contact_phone",
-            "last_donation_date",
-            "created_at", "updated_at",
-        ]
-        read_only_fields = [
-            "id", "verification_status", "cooldown_until",
-            "created_at", "updated_at",
-        ]    
