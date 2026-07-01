@@ -64,24 +64,30 @@ class VerifyOTPSerializer(serializers.Serializer):
     purpose = serializers.ChoiceField(choices=OTPVerification.Purpose.choices)
 
     def validate(self, data):
-        try:
-            user = User.objects.get(phone=data["phone"])
-        except User.DoesNotExist:
-            raise serializers.ValidationError("User not found.")
+      try:
+        user = User.objects.get(phone=data["phone"])
+      except User.DoesNotExist:
+        raise serializers.ValidationError(f"No user found for phone: {data['phone']}")
 
-        otp = OTPVerification.objects.filter(
-            user=user,
-            code=data["code"],
-            purpose=data["purpose"],
-            is_used=False,
-        ).last()
+      otp = OTPVerification.objects.filter(
+        user=user,
+        code=data["code"],
+        purpose=data["purpose"],
+        is_used=False,
+    ).last()
 
-        if not otp or not otp.is_valid():
-            raise serializers.ValidationError("Invalid or expired OTP.")
+      if not otp:
+        raise serializers.ValidationError(
+            f"No matching OTP found for purpose='{data['purpose']}', code='{data['code']}'"
+        )
+      if not otp.is_valid():
+        raise serializers.ValidationError(
+            f"OTP expired at {otp.expires_at} (now {timezone.now()})"
+        )
 
-        data["user"] = user
-        data["otp"]  = otp
-        return data
+      data["user"] = user
+      data["otp"] = otp
+      return data
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
