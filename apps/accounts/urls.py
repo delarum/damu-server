@@ -1,7 +1,6 @@
-from django.urls import path, include
+from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
-from .admin_urls import urlpatterns as admin_urlpatterns
 
 urlpatterns = [
     # Registration
@@ -20,7 +19,4 @@ urlpatterns = [
     # Account
     path("me/",                views.me,                name="me"),
     path("change-password/",   views.change_password,   name="change-password"),
-    
-    # Admin endpoints
-    path("", include(admin_urlpatterns)),
 ]
