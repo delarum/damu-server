@@ -37,6 +37,7 @@ THIRD_PARTY_APPS = [
     "storages",
     "django_celery_beat",
     "drf_yasg",
+    "django_filters",
 ]
 
 LOCAL_APPS = [
