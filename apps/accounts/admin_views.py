@@ -30,10 +30,9 @@ from .permissions import (
 )
 from apps.hospitals.models import HospitalProfile
 from apps.donors.models import DonorProfile
-from apps.matching.models import MatchRequest
-from apps.payments.models import Transaction
+from apps.matching.models import ContactRequest
 from apps.audit.models import AuditLog
-from apps.gamification.models import PointsTransaction, Badge, DonationRecord
+from apps.gamification.models import Badge, DonationRecord
 
 
 # ============================================================================
@@ -330,7 +329,7 @@ class AdminStatsView(viewsets.ViewSet):
             "total_hospitals": User.objects.filter(role=User.Role.HOSPITAL_ADMIN).count(),
             "pending_hospitals": HospitalProfile.objects.filter(approval_status='pending').count(),
             "active_hospitals": HospitalProfile.objects.filter(approval_status='approved').count(),
-            "total_matches": MatchRequest.objects.count(),
+            "total_matches": ContactRequest.objects.count(),
             "total_donations": DonorProfile.objects.aggregate(
                 total=Count('donations')
             )['total'] or 0,
@@ -361,16 +360,13 @@ class HospitalAdminViewSet(viewsets.ViewSet):
         hospital = request.user.hospital_profile
         
         # Get stats for this hospital only
-        from apps.matching.models import MatchRequest
-        from apps.donations.models import DonationRecord
-        
         stats = {
             "facility_name": hospital.facility_name,
             "approval_status": hospital.approval_status,
             "subscription_tier": hospital.subscription_tier,
             "searches_remaining": hospital.searches_remaining,
-            "total_requests": MatchRequest.objects.filter(hospital=hospital).count(),
-            "pending_matches": MatchRequest.objects.filter(
+            "total_requests": ContactRequest.objects.filter(hospital=hospital).count(),
+            "pending_matches": ContactRequest.objects.filter(
                 hospital=hospital,
                 status='pending'
             ).count(),
