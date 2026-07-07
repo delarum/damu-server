@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError
 
+from apps.notifications.services import send_email
 from .models import User, OTPVerification
 from .serializers import (
     RegisterDonorSerializer,
@@ -86,11 +87,11 @@ def verify_otp(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def resend_otp(request):
-    phone   = request.data.get("phone")
+    email   = request.data.get("email")
     purpose = request.data.get("purpose", OTPVerification.Purpose.REGISTRATION)
 
     try:
-        user = User.objects.get(phone=phone)
+        user = User.objects.get(email=email)
     except User.DoesNotExist:
         return Response(
             {"error": True, "message": "User not found"},
@@ -104,7 +105,9 @@ def resend_otp(request):
         purpose=purpose,
         expires_at=timezone.now() + timedelta(minutes=10),
     )
-    print(f"[DEV] Resent OTP for {user.phone}: {code}")
+    subject = "Your DamuLink verification code"
+    message = f"Your verification code is: {code}\n\nThis code will expire in 10 minutes."
+    send_email(user, subject, message)
     return Response({"message": "OTP resent successfully", "otp_sent": True})
 
 
@@ -149,8 +152,8 @@ def me(request):
         {
             "id":          user.id,
             "full_name":   user.full_name,
-            "phone":       user.phone,
             "email":       user.email,
+            "phone":       user.phone,
             "role":        user.role,
             "is_verified": user.is_verified,
             "created_at":  user.created_at,

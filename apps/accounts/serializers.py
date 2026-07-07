@@ -3,6 +3,7 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from apps.notifications.services import send_email
 from .models import User, OTPVerification
 
 
@@ -11,11 +12,11 @@ class RegisterDonorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["full_name", "phone", "email", "password", "national_id", "date_of_birth"]
+        fields = ["full_name", "email", "password", "phone", "national_id", "date_of_birth"]
 
-    def validate_phone(self, value):
-        if User.objects.filter(phone=value).exists():
-            raise serializers.ValidationError("A user with this phone number already exists.")
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
         return value
 
     def create(self, validated_data):
@@ -34,8 +35,9 @@ class RegisterDonorSerializer(serializers.ModelSerializer):
             purpose=OTPVerification.Purpose.REGISTRATION,
             expires_at=timezone.now() + timedelta(minutes=10),
         )
-        # TODO: send via Africa's Talking SMS
-        print(f"[DEV] OTP for {user.phone}: {code}")
+        subject = "Verify your DamuLink account"
+        message = f"Your verification code is: {code}\n\nThis code will expire in 10 minutes."
+        send_email(user, subject, message)
 
 
 class RegisterHospitalSerializer(serializers.ModelSerializer):
@@ -43,11 +45,11 @@ class RegisterHospitalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["full_name", "phone", "email", "password"]
+        fields = ["full_name", "email", "password", "phone"]
 
-    def validate_phone(self, value):
-        if User.objects.filter(phone=value).exists():
-            raise serializers.ValidationError("A user with this phone number already exists.")
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
         return value
 
     def create(self, validated_data):
@@ -59,22 +61,22 @@ class RegisterHospitalSerializer(serializers.ModelSerializer):
 
 
 class VerifyOTPSerializer(serializers.Serializer):
-    phone   = serializers.CharField()
+    email   = serializers.EmailField()
     code    = serializers.CharField(max_length=6)
     purpose = serializers.ChoiceField(choices=OTPVerification.Purpose.choices)
 
     def validate(self, data):
       try:
-        user = User.objects.get(phone=data["phone"])
+        user = User.objects.get(email=data["email"])
       except User.DoesNotExist:
-        raise serializers.ValidationError(f"No user found for phone: {data['phone']}")
+        raise serializers.ValidationError(f"No user found for email: {data['email']}")
 
       otp = OTPVerification.objects.filter(
         user=user,
         code=data["code"],
         purpose=data["purpose"],
         is_used=False,
-    ).last()
+      ).last()
 
       if not otp:
         raise serializers.ValidationError(
@@ -92,7 +94,7 @@ class VerifyOTPSerializer(serializers.Serializer):
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Adds user role and verification status to the JWT response."""
-    username_field = "phone"
+    username_field = "email"
 
     @classmethod
     def get_token(cls, user):
