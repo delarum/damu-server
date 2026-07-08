@@ -9,7 +9,13 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 # Plain console email in dev — no SendGrid needed
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "apikey"
+EMAIL_HOST_PASSWORD = env("SENDGRID_API_KEY")
+DEFAULT_FROM_EMAIL = "noreply@damulink.co.ke"
 
 # Disable S3 locally — use local filesystem
 USE_S3 = False

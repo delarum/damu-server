@@ -218,7 +218,7 @@ if USE_S3:
 # Email
 # ---------------------------------------------------------------------------
 EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
-SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
+SENDGRID_API_KEY = env("SENDGRID_API_KEY", default="")
 DEFAULT_FROM_EMAIL = "noreply@damulink.co.ke"
 
 # ---------------------------------------------------------------------------
