@@ -49,8 +49,8 @@ def send_sms(recipient_user, message):
 
 
 def send_email(recipient_user, subject, message):
-    """Send email via SendGrid. Falls back to console in dev."""
     from .models import Notification
+    from django.conf import settings
 
     notif = Notification.objects.create(
         recipient=recipient_user,
@@ -59,8 +59,10 @@ def send_email(recipient_user, subject, message):
         message=message,
     )
 
+    use_console = not getattr(settings, "SENDGRID_API_KEY", None)
+
     try:
-        if settings.DEBUG:
+        if use_console:
             print(f"[DEV EMAIL] To: {recipient_user.email}\nSubject: {subject}\n{message}\n")
             notif.status  = Notification.Status.SENT
             notif.sent_at = timezone.now()

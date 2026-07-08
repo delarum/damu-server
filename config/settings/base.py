@@ -282,3 +282,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "apikey"  # literally the string "apikey", SendGrid convention
+EMAIL_HOST_PASSWORD = env("SENDGRID_API_KEY")
+DEFAULT_FROM_EMAIL = "noreply@damulink.co.ke"  # must be a verified sender in SendGrid
