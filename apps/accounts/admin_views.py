@@ -211,6 +211,43 @@ class AdminHospitalViewSet(viewsets.ModelViewSet):
             })
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def grant_subscription(self, request, pk=None):
+      """Manually grant a subscription without payment (admin override)."""
+      hospital = self.get_object()
+    
+      tier = request.data.get('subscription_tier', HospitalProfile.SubscriptionTier.PROFESSIONAL)
+      duration_days = request.data.get('duration_days', 365)
+    
+      hospital.subscription_tier = tier
+      hospital.subscription_status = 'active'
+      hospital.subscription_expires = timezone.now() + timezone.timedelta(days=duration_days)
+      hospital.save()
+    
+    # Log the action
+      AuditLog.objects.create(
+        actor=request.user,
+        actor_role=request.user.role,
+        action=AuditLog.Action.ADMIN_ACTION,
+        target_user=hospital.admin,
+        ip_address=request.META.get('REMOTE_ADDR'),
+        endpoint=request.path,
+        method=request.method,
+        metadata={
+            "action": "grant_subscription",
+            "hospital_id": hospital.id,
+            "facility_name": hospital.facility_name,
+            "tier": tier,
+            "duration_days": duration_days,
+            "granted_by": request.user.email,
+        }
+    )
+    
+      return Response({
+        "message": f"{hospital.facility_name} granted {tier} subscription for {duration_days} days",
+        "hospital": AdminHospitalDetailSerializer(hospital).data
+    })
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
