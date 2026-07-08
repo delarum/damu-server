@@ -160,12 +160,12 @@ class AdminAuditLogSerializer(serializers.ModelSerializer):
 
 
 class AdminStatsSerializer(serializers.Serializer):
-    """Platform statistics dashboard."""
     total_users = serializers.IntegerField()
     total_donors = serializers.IntegerField()
     total_hospitals = serializers.IntegerField()
     pending_hospitals = serializers.IntegerField()
     active_hospitals = serializers.IntegerField()
+    active_subscriptions = serializers.IntegerField()
     total_matches = serializers.IntegerField()
     total_donations = serializers.IntegerField()
     recent_registrations = serializers.IntegerField()

@@ -374,21 +374,22 @@ class AdminStatsView(viewsets.ViewSet):
         last_30_days = now - timezone.timedelta(days=30)
         
         stats = {
-            "total_users": User.objects.count(),
-            "total_donors": User.objects.filter(role=User.Role.DONOR).count(),
-            "total_hospitals": User.objects.filter(role=User.Role.HOSPITAL_ADMIN).count(),
-            "pending_hospitals": HospitalProfile.objects.filter(approval_status='pending').count(),
-            "active_hospitals": HospitalProfile.objects.filter(approval_status='approved').count(),
-            "total_matches": ContactRequest.objects.count(),
-            "total_donations": DonorProfile.objects.aggregate(
-                total=Count('donations')
-            )['total'] or 0,
-            "recent_registrations": User.objects.filter(created_at__gte=last_30_days).count(),
-            "recent_logins": AuditLog.objects.filter(
-                action=AuditLog.Action.LOGIN,
-                timestamp__gte=last_30_days
-            ).count(),
-        }
+    "total_users": User.objects.count(),
+    "total_donors": User.objects.filter(role=User.Role.DONOR).count(),
+    "total_hospitals": User.objects.filter(role=User.Role.HOSPITAL_ADMIN).count(),
+    "pending_hospitals": HospitalProfile.objects.filter(approval_status='pending').count(),
+    "active_hospitals": HospitalProfile.objects.filter(approval_status='approved').count(),
+    "active_subscriptions": HospitalProfile.objects.filter(subscription_status='active').count(),
+    "total_matches": ContactRequest.objects.count(),
+    "total_donations": DonorProfile.objects.aggregate(
+        total=Count('donations')
+    )['total'] or 0,
+    "recent_registrations": User.objects.filter(created_at__gte=last_30_days).count(),
+    "recent_logins": AuditLog.objects.filter(
+        action=AuditLog.Action.LOGIN,
+        timestamp__gte=last_30_days
+    ).count(),
+}
         
         serializer = AdminStatsSerializer(stats)
         return Response(serializer.data)
