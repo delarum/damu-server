@@ -396,13 +396,22 @@ def donor_contact_requests(request):
 
     data = []
     for cr in requests_qs:
+        h = cr.hospital
         data.append({
-            "request_id":   cr.id,
-            "hospital":     cr.hospital.facility_name,
-            "reason":       cr.reason,
-            "status":       cr.status,
+            "request_id": cr.id,
+            "hospital": {
+                "id": h.id,
+                "name": h.facility_name,
+                "facility_type": h.facility_type,
+                "county": h.county,
+                "address": h.address,
+                "phone": h.phone,
+                "is_verified": h.approval_status == HospitalProfile.ApprovalStatus.APPROVED,
+            },
+            "reason": cr.reason,
+            "status": cr.status,
             "requested_at": cr.requested_at,
-            "expires_at":   cr.expires_at,
+            "expires_at": cr.expires_at,
         })
 
     return Response({"count": len(data), "results": data})
