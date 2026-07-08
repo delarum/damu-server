@@ -216,16 +216,29 @@ class AdminHospitalViewSet(viewsets.ModelViewSet):
     def grant_subscription(self, request, pk=None):
       """Manually grant a subscription without payment (admin override)."""
       hospital = self.get_object()
-    
+
       tier = request.data.get('subscription_tier', HospitalProfile.SubscriptionTier.PROFESSIONAL)
       duration_days = request.data.get('duration_days', 365)
-    
+
+      if tier not in HospitalProfile.TIER_LIMITS:
+        return Response(
+            {"error": True, "message": f"Invalid tier '{tier}'. Choose from: {list(HospitalProfile.TIER_LIMITS.keys())}"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+      if hospital.approval_status != HospitalProfile.ApprovalStatus.APPROVED:
+        return Response(
+            {"error": True, "message": "Hospital must be approved before granting a subscription."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
       hospital.subscription_tier = tier
-      hospital.subscription_status = 'active'
+      hospital.subscription_status = "active"
       hospital.subscription_expires = timezone.now() + timezone.timedelta(days=duration_days)
+      hospital.search_limit = HospitalProfile.TIER_LIMITS[tier]
+      hospital.search_quota = 0  # reset usage
       hospital.save()
-    
-    # Log the action
+
       AuditLog.objects.create(
         actor=request.user,
         actor_role=request.user.role,
@@ -243,7 +256,7 @@ class AdminHospitalViewSet(viewsets.ModelViewSet):
             "granted_by": request.user.email,
         }
     )
-    
+
       return Response({
         "message": f"{hospital.facility_name} granted {tier} subscription for {duration_days} days",
         "hospital": AdminHospitalDetailSerializer(hospital).data
