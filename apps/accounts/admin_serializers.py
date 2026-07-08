@@ -81,15 +81,19 @@ class AdminHospitalListSerializer(serializers.ModelSerializer):
     """List hospitals for admin."""
     admin_email = serializers.EmailField(source='admin.email', read_only=True)
     admin_name = serializers.CharField(source='admin.full_name', read_only=True)
-    
+    is_approved = serializers.SerializerMethodField()
+
     class Meta:
         model = HospitalProfile
         fields = [
             "id", "facility_name", "facility_type", "license_number",
-            "county", "approval_status", "subscription_tier",
+            "county", "approval_status", "is_approved", "subscription_tier",
             "subscription_status", "admin_email", "admin_name",
             "created_at", "approved_at"
         ]
+
+    def get_is_approved(self, obj):
+        return obj.approval_status == HospitalProfile.ApprovalStatus.APPROVED
 
 
 class AdminHospitalDetailSerializer(serializers.ModelSerializer):

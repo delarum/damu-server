@@ -8,6 +8,7 @@ class HospitalProfileSerializer(serializers.ModelSerializer):
     admin_phone          = serializers.CharField(source="admin.phone", read_only=True)
     is_active_subscriber = serializers.BooleanField(read_only=True)
     searches_remaining   = serializers.IntegerField(read_only=True)
+    is_approved          = serializers.SerializerMethodField()
 
     class Meta:
         model  = HospitalProfile
@@ -16,7 +17,7 @@ class HospitalProfileSerializer(serializers.ModelSerializer):
             "facility_name", "facility_type", "license_number", "year_established",
             "address", "county", "lat", "lng",
             "phone", "email", "website",
-            "approval_status", "rejection_reason",
+            "approval_status", "is_approved", "rejection_reason",
             "subscription_tier", "subscription_status", "subscription_expires",
             "is_active_subscriber", "searches_remaining",
             "created_at", "updated_at",
@@ -26,6 +27,9 @@ class HospitalProfileSerializer(serializers.ModelSerializer):
             "subscription_status", "subscription_expires",
             "created_at", "updated_at",
         ]
+
+    def get_is_approved(self, obj):
+        return obj.approval_status == HospitalProfile.ApprovalStatus.APPROVED
 
 
 class HospitalProfileCreateSerializer(serializers.ModelSerializer):
